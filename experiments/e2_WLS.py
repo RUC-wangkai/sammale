@@ -6,8 +6,8 @@
 
 @version: 1.0
 @license: GNU General Public License(Version 3)
-@file: e1_LinearPrimaryFunctionModel.py
-@time: 2016/12/18 23:56
+@file: e2_WLS.py
+@time: 2016/12/19 8:43
 
 
 """
@@ -33,14 +33,13 @@ def test1():
     model.add(lambda t: t)
     model.add(lambda t: np.sin(t * np.pi) / (t * np.pi))
 
-    x, y = datasets.make_simple_curve1(100, 0.1)
+    # x, y = datasets.make_simple_curve1(100, 0.9)
+    x, y = datasets.make_simple_curve2(100)
     y_pred = model.predict(x)
 
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 
-    model.fit(x, y)
-    # model.fit(x, y, method='wls')
-
+    model.fit(x, y, method='ls')
     y_pred = model.predict(x)
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
     print(model.theta)
@@ -62,13 +61,15 @@ def test2():
     model.add(lambda t: t ** 6)
     model.add(lambda t: t ** 7)
     model.add(lambda t: t ** 8)
+    model.add(lambda t: t ** 9)
+    model.add(lambda t: t ** 10)
 
-    x, y = datasets.make_simple_curve1(100, 0.2)
+    x, y = datasets.make_simple_curve1(100, 0.)
     y_pred = model.predict(x)
 
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 
-    model.fit(x, y)
+    model.fit(x, y, 'wls')
     y_pred = model.predict(x)
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 

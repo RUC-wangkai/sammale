@@ -13,18 +13,18 @@
 """
 
 import numpy as np
-import math
+
 
 def make_simple_curve1(nb=100, noise=0.0):
     """f(x) = sin(pi*x) / (pi*x) + 0.1*x + noise*0.3*randn()"""
     x = np.linspace(-3, 3, nb)
     noi = np.random.randn(nb) * 0.3
-    y = np.sin(math.pi * x) / (math.pi * x) + 0.1 * x + noise * noi
+    y = np.sin(np.pi * x) / (np.pi * x) + 0.1 * x + noise * noi
     return x, y
 
 
-def make_simple_curve2(nb=100, noise=0.0):
-    x = np.linspace(-10, 10, nb)
-    noi = np.random.rand(nb) * 10
-    y = np.sin(x) * 5 + 0.1 * x ** 2 + noise * noi
+def make_simple_curve2(nb=100):
+    x = np.linspace(-3, 3, nb)
+    noi = np.random.randn(nb) * 0.3
+    y = np.sin(np.pi * x) / (np.pi * x) + 0.1 * x + 0.1 * noi * x
     return x, y

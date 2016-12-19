@@ -1,9 +1,15 @@
 # encoding: utf-8
 import numpy as np
 
+from .objectives import MSE
+
 
 class LinearPrimaryFunctionModel(object):
-    """线性基函数模型"""
+    """基于基函数的线性模型。
+
+    基函数可以是多项式、三角函数、指数函数、样条函数。
+
+    """
 
     def __init__(self, primary_functions=[]):
         self.primary_functions = primary_functions
@@ -35,7 +41,73 @@ class LinearPrimaryFunctionModel(object):
         p_x = self.calculate_primary_function(x)
         return np.dot(p_x, self.theta.T).reshape(p_x.shape[0])
 
-    def fit(self, x, y):
+    def fit(self, x, y, method='ls'):
+        """支持最小二乘法(ls)与加权最小二乘法(wls)求解。"""
+        if method not in {'ls', 'wls'}:
+            raise Exception('Invalid method:{}, only support "ls" and "wls"!'.format(method))
         p_x = self.calculate_primary_function(x)
-        # 最小二乘法的矩阵求法
-        self.theta = np.mat(p_x.T.dot(p_x)).I.dot(p_x.T).dot(y).A
+        if method == 'ls':
+            W = np.eye(len(y))
+        elif method == 'wls':
+            # TODO 确认一下，加权最小二乘法中的权重矩阵是否这样取值！
+            W = np.diag(1 / (np.ones_like(y) * np.var(y)))
+        self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
+
+
+class LinearKernelFunctionModel(object):
+    """基于核函数的线性模型。
+
+    核函数可以是线性核、高斯核。
+
+    """
+
+    def __init__(self, kernel_function):
+        self.kernel_function = kernel_function
+        self.kernels = None
+        self.theta = None
+
+    def calculate_kernel_function(self, x):
+        """x仅支持1维向量"""
+        x = np.asarray(x)
+        n = x.shape[0]
+        m = self.kernels.shape[0]
+        p_x = np.empty((n, m), dtype=np.float32)
+        for i in range(n):
+            for j in range(m):
+                p_x[i][j] = self.kernel_function(x[i], self.kernels[j])
+        return p_x
+
+    def predict(self, x):
+        if self.theta is None:
+            self.theta = np.zeros(self.kernels.shape[0])
+        k_x = self.calculate_kernel_function(x)
+        return np.dot(k_x, self.theta.T).reshape(k_x.shape[0])
+
+    def fit_LS(self, x, y, method='ls'):
+        """支持最小二乘法(ls)与加权最小二乘法(wls)求解。"""
+        if method not in {'ls', 'wls'}:
+            raise Exception('Invalid method:{}, only support "ls" and "wls"!'.format(method))
+        self.kernels = np.array(x)
+        p_x = self.calculate_kernel_function(x)
+        W = np.eye(len(y))
+        if method == 'ls':
+            W = np.eye(len(y))
+        elif method == 'wls':
+            # TODO 确认一下，加权最小二乘法中的权重矩阵是否这样取值！
+            W = np.diag(1 / (np.ones_like(y) * np.var(y)))
+        self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
+
+    def fit_SGD(model, x, y, lr=0.1, nb_epochs=10, log_epoch=1):
+        model.kernels = x
+        model.theta = np.ones_like(x)
+        n = x.shape[0]
+
+        for epoch in range(nb_epochs):
+            for i in range(n):
+                t = model.predict([x[i]])
+                err = t - y[i]
+                d_theta = model.calculate_kernel_function([x[i]])[0] * err
+                model.theta -= lr * d_theta
+            if epoch % log_epoch == 0:
+                y_pred = model.predict(x)
+                print('epoch:{}, mse:{}'.format(epoch, MSE(y, y_pred)))
