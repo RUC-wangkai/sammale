@@ -41,7 +41,7 @@ class LinearPrimaryFunctionModel(object):
         p_x = self.calculate_primary_function(x)
         return np.dot(p_x, self.theta.T).reshape(p_x.shape[0])
 
-    def fit(self, x, y, method='ls'):
+    def fit_LS(self, x, y, method='ls'):
         """支持最小二乘法(ls)与加权最小二乘法(wls)求解。"""
         if method not in {'ls', 'wls'}:
             raise Exception('Invalid method:{}, only support "ls" and "wls"!'.format(method))
@@ -52,6 +52,18 @@ class LinearPrimaryFunctionModel(object):
             # TODO 确认一下，加权最小二乘法中的权重矩阵是否这样取值！
             W = np.diag(1 / (np.ones_like(y) * np.var(y)))
         self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
+
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10, log_epoch=1):
+        n = x.shape[0]
+        for epoch in range(nb_epochs):
+            for i in range(n):
+                t = self.predict([x[i]])
+                err = t - y[i]
+                d_theta = self.calculate_primary_function([x[i]])[0] * err
+                self.theta -= lr * d_theta + L2_lambda * self.theta + L1_lambda * np.sign(self.theta)
+            if epoch % log_epoch == 0:
+                y_pred = self.predict(x)
+                print('epoch:{}, mse:{}'.format(epoch, MSE(y, y_pred)))
 
 
 class LinearKernelFunctionModel(object):
@@ -97,17 +109,16 @@ class LinearKernelFunctionModel(object):
             W = np.diag(1 / (np.ones_like(y) * np.var(y)))
         self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
 
-    def fit_SGD(model, x, y, lr=0.1, nb_epochs=10, log_epoch=1):
-        model.kernels = x
-        model.theta = np.ones_like(x)
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10, log_epoch=1):
+        self.kernels = x
         n = x.shape[0]
-
+        self.theta = np.ones(n)
         for epoch in range(nb_epochs):
             for i in range(n):
-                t = model.predict([x[i]])
+                t = self.predict([x[i]])
                 err = t - y[i]
-                d_theta = model.calculate_kernel_function([x[i]])[0] * err
-                model.theta -= lr * d_theta
+                d_theta = self.calculate_kernel_function([x[i]])[0] * err
+                self.theta -= lr * d_theta + L2_lambda * self.theta + L1_lambda * np.sign(self.theta)
             if epoch % log_epoch == 0:
-                y_pred = model.predict(x)
+                y_pred = self.predict(x)
                 print('epoch:{}, mse:{}'.format(epoch, MSE(y, y_pred)))

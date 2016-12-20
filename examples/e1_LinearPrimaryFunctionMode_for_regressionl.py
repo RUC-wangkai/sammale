@@ -6,11 +6,12 @@
 
 @version: 1.0
 @license: GNU General Public License(Version 3)
-@file: e1_start.py
-@time: 2016/12/18 10:52
+@file: e1_LinearPrimaryFunctionModel.py
+@time: 2016/12/18 23:56
 
 
 """
+
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
@@ -21,18 +22,25 @@ from sammale import objectives
 from sammale.models import LinearPrimaryFunctionModel
 
 
+def run():
+    test1()
+    # test2()
+
+
 def test1():
+    x, y = datasets.make_simple_curve1(100, 0.1)
+
     model = LinearPrimaryFunctionModel()
     model.add(lambda t: 1)
     model.add(lambda t: t)
     model.add(lambda t: np.sin(t * np.pi) / (t * np.pi))
-
-    x, y = datasets.make_simple_curve1(100, 0.0)
     y_pred = model.predict(x)
 
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 
-    model.fit(x, y)
+    model.fit_LS(x, y)
+    # model.fit(x, y, method='wls')
+
     y_pred = model.predict(x)
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
     print(model.theta)
@@ -60,7 +68,7 @@ def test2():
 
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 
-    model.fit(x, y)
+    model.fit_LS(x, y)
     y_pred = model.predict(x)
     print('mse:{}'.format(objectives.MSE(y, y_pred)))
 
@@ -68,11 +76,6 @@ def test2():
     plt.scatter(x, y_pred, c='r', label='y_pred')
     plt.legend()
     plt.show()
-
-
-def run():
-    # test1()
-    test2()
 
 
 if __name__ == '__main__':
