@@ -54,6 +54,8 @@ def test2():
 
     model.fit_SGD(x, y, lr=0.1, nb_epochs=200, log_epoch=40)
     print model.theta
+    for y1, y2 in zip(y, model.predict(x)):
+        print '{:2}\t{:2}'.format(y1, y2)
     plot_prediction(model, x, y)
 
 
