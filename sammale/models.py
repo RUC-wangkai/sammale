@@ -109,7 +109,7 @@ class LinearKernelFunctionModel(object):
             W = np.diag(1 / (np.ones_like(y) * np.var(y)))
         self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
 
-    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10,  log_epoch=1):
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10, log_epoch=1):
         self.kernels = x
         n = x.shape[0]
         self.theta = np.ones(n)
@@ -122,3 +122,14 @@ class LinearKernelFunctionModel(object):
             if epoch % log_epoch == 0:
                 y_pred = self.predict(x)
                 print('epoch:{}, mse:{}'.format(epoch, MSE(y, y_pred)))
+
+
+class SVM(object):
+    def __init__(self):
+        pass
+
+    def predict(self, x):
+        pass
+
+    def fit(self):
+        pass

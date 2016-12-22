@@ -5,3 +5,4 @@ from . import kernels
 from . import models
 from . import objectives
 from . import optimizers
+from . import visualizers
