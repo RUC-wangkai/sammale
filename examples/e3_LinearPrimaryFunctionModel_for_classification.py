@@ -22,8 +22,8 @@ from sammale.datasets import load_simple_data
 
 
 def run():
-    # test1()
-    test2()
+    test1()
+    # test2()
 
 
 def test1():
@@ -37,6 +37,9 @@ def test1():
     model.fit_SGD(x, y, lr=0.1, nb_epochs=200, log_epoch=50)
     print model.theta
     plot_prediction(model, x, y)
+
+
+
 
 
 def test2():
