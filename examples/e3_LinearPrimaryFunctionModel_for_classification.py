@@ -12,13 +12,12 @@
 
 """
 
-from sklearn import datasets
 import numpy as np
-import matplotlib.pyplot as plt
-from sammale.models import LinearPrimaryFunctionModel, LinearKernelFunctionModel
-from sammale.kernels import gaussian_kernel
-from sammale.visualizers import plot_prediction
+from sklearn import datasets
+
 from sammale.datasets import load_simple_data
+from sammale.models import LinearPrimaryFunctionModel
+from sammale.visualizers import plot_prediction
 
 
 def run():

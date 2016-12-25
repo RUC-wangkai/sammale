@@ -35,7 +35,7 @@ def plot_prediction(model, x, y):
     Z = np.c_[xx.ravel(), yy.ravel()]
     T = np.sign(model.predict(Z))
     T = T.reshape(xx.shape)
-    plt.figure('prediction')
+    # plt.figure('prediction')
     plt.xlim([np.min(xx), np.max(xx)])
     plt.ylim([np.min(yy), np.max(yy)])
     plt.contourf(xx, yy, T, cmap=plt.cm.Spectral)
