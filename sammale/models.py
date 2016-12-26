@@ -2,7 +2,7 @@
 import numpy as np
 
 from .objectives import MSE
-
+from .datasets import resample
 
 class LinearPrimaryFunctionModel(object):
     """基于基函数的线性模型。
@@ -53,7 +53,7 @@ class LinearPrimaryFunctionModel(object):
             W = np.diag(1 / (np.ones_like(y) * np.var(y)))
         self.theta = np.mat(p_x.T.dot(W).dot(p_x)).I.dot(p_x.T).dot(W).dot(y).A
 
-    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10, log_epoch=1):
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=10, log_epoch=1, verbose=True):
         n = x.shape[0]
         for epoch in range(nb_epochs):
             for i in range(n):
@@ -61,7 +61,7 @@ class LinearPrimaryFunctionModel(object):
                 err = t - y[i]
                 d_theta = self.calculate_primary_function([x[i]])[0] * err
                 self.theta -= lr * d_theta + L2_lambda * self.theta + L1_lambda * np.sign(self.theta)
-            if epoch % log_epoch == 0:
+            if epoch % log_epoch == 0 and verbose:
                 y_pred = self.predict(x)
                 print('epoch:{}, mse:{}'.format(epoch, MSE(y, y_pred)))
 
@@ -125,6 +125,7 @@ class LinearKernelFunctionModel(object):
 
 
 class SVM(object):
+    # TODO
     def __init__(self):
         pass
 
@@ -133,3 +134,51 @@ class SVM(object):
 
     def fit(self):
         pass
+
+
+
+class DecisionStump(object):
+    def __init__(self):
+        self.dimension = 0
+        self.threshold = 0
+        self.direction = 1
+
+    def predict(self, x):
+        return np.sign(self.direction * (x[:, self.dimension] - self.threshold)).reshape(x.shape[0], 1)
+
+    def fit_random(self, x, y):
+        n, m = x.shape
+        d = np.random.randint(0, m)
+        data = np.hstack((x[:, d].reshape(n, 1), y))
+        sort_data = data[data.argsort(axis=0)[:, 0]]
+        el = sort_data[:, 1].cumsum()
+        eu = sort_data[::-1, 1].cumsum()
+        e = eu[-2::-1] - el[:-1]
+        ei = np.abs(e).argmax()
+        c = np.mean(sort_data[ei:ei + 2, 0])
+        s = np.sign(e[ei])
+        self.dimension = d
+        self.threshold = c
+        self.direction = s
+
+
+class BaggingModel(object):
+    def __init__(self, stumps=[]):
+        self.stumps = stumps
+
+    def predict(self, x):
+        y = 0
+        for stump in self.stumps:
+            y += stump.predict(x)
+        return np.sign(y / len(self.stumps))
+
+
+    def fit(self, x, y, nb_bagging, nb_resample, log_epoch=1000):
+        self.stumps = []
+        for i in range(nb_bagging):
+            xx, yy = resample(x, y, nb_resample)
+            stump = DecisionStump()
+            stump.fit_random(xx, yy)
+            self.stumps.append(stump)
+            if i % log_epoch == 0:
+                print 'i:{}'.format(i)

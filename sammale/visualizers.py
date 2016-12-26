@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_prediction(model, x, y):
+def plot_prediction(model, x, y, lmbda=0.008, xlim=None, ylim=None):
     """绘画出决策边界。只适用于数据维数为2的情况。"""
     real_x_max, real_x_min = np.max(x[:, 0]), np.min(x[:, 0])
     real_y_max, real_y_min = np.max(x[:, 1]), np.min(x[:, 1])
@@ -27,18 +27,22 @@ def plot_prediction(model, x, y):
     y_max = real_y_max + y_padding
     y_min = real_y_min - y_padding
 
-    h = 0.008 * (real_x_max - real_x_min)
+    h = lmbda * (real_x_max - real_x_min)
     xx = np.arange(x_min, x_max, h)
     yy = np.arange(y_min, y_max, h)
 
     xx, yy = np.meshgrid(xx, yy)
     Z = np.c_[xx.ravel(), yy.ravel()]
     T = np.sign(model.predict(Z))
+    # T = model.predict(Z)
     T = T.reshape(xx.shape)
     # plt.figure('prediction')
-    plt.xlim([np.min(xx), np.max(xx)])
-    plt.ylim([np.min(yy), np.max(yy)])
+    if xlim is None:
+        plt.xlim([np.min(xx), np.max(xx)])
+    if ylim is None:
+        plt.ylim([np.min(yy), np.max(yy)])
     plt.contourf(xx, yy, T, cmap=plt.cm.Spectral)
     plt.scatter(x[:, 0], x[:, 1], s=100, c=y)
     plt.scatter(x[:, 0], x[:, 1], s=30, c=np.sign(model.predict(x)), marker='s')
-    plt.show()
+    # plt.show()
+

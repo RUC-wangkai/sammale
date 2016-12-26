@@ -15,6 +15,16 @@
 import numpy as np
 
 
+def resample(x, y, k):
+    n = x.shape[0]
+    xx = np.empty((k, x.shape[1]))
+    yy = np.empty((k, y.shape[1]))
+    r = np.random.randint(0, n, k)
+    xx = x[r]
+    yy = y[r]
+    return xx, yy
+
+
 def make_simple_curve0(nb=100, noise=0.0):
     x = np.linspace(-3, 3, nb)
     noi = np.random.randn(nb) * 0.3
@@ -37,7 +47,7 @@ def make_simple_curve2(nb=100):
     return x, y
 
 
-def load_simple_data(nb=100):
+def make_simple_data0(nb=100):
     nb_pos = nb / 2
     pos_x = np.random.randn(nb_pos, 2) * 0.2 + 0.8
     pos_y = np.ones(nb_pos, dtype=np.float32)
@@ -47,3 +57,11 @@ def load_simple_data(nb=100):
     neg_y = -np.ones(nb_neg, dtype=np.float32)
 
     return np.vstack((pos_x, neg_x)), np.hstack((pos_y, neg_y))
+
+
+def make_simple_data1(nb=100, dimension=2):
+    x = np.random.randn(nb, dimension)
+    y = 2 * (x[:, 0] > x[:, 1]) - 1
+    y = y.reshape(nb, 1)
+    return x, y
+

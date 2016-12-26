@@ -15,7 +15,7 @@
 import numpy as np
 from sklearn import datasets
 
-from sammale.datasets import load_simple_data
+from sammale.datasets import make_simple_data0
 from sammale.models import LinearPrimaryFunctionModel
 from sammale.visualizers import plot_prediction
 
@@ -26,7 +26,7 @@ def run():
 
 
 def test1():
-    x, y = load_simple_data(nb=100)
+    x, y = make_simple_data0(nb=100)
 
     model = LinearPrimaryFunctionModel()
     model.add(lambda t: 1)
