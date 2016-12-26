@@ -23,7 +23,7 @@ def test1():
 
     n, m = x.shape
     model = BaggingModel()
-    model.fit(x, y, nb_bagging=10000, nb_resample=8)
+    model.fit(x, y, nb_bagging=1000, nb_resample=10)
     print 'acc:{}'.format(np.sum(model.predict(x) == y) * 1.0 / n)
     plot_prediction(model, x, y, lmbda=0.01)
     plt.show()

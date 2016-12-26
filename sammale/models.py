@@ -1,8 +1,9 @@
 # encoding: utf-8
 import numpy as np
 
-from .objectives import MSE
 from .datasets import resample
+from .objectives import MSE
+
 
 class LinearPrimaryFunctionModel(object):
     """基于基函数的线性模型。
@@ -136,7 +137,6 @@ class SVM(object):
         pass
 
 
-
 class DecisionStump(object):
     def __init__(self):
         self.dimension = 0
@@ -150,28 +150,27 @@ class DecisionStump(object):
         n, m = x.shape
         d = np.random.randint(0, m)
         data = np.hstack((x[:, d].reshape(n, 1), y))
-        sort_data = data[data.argsort(axis=0)[:, 0]]
-        el = sort_data[:, 1].cumsum()
-        eu = sort_data[::-1, 1].cumsum()
-        e = eu[-2::-1] - el[:-1]
-        ei = np.abs(e).argmax()
-        c = np.mean(sort_data[ei:ei + 2, 0])
-        s = np.sign(e[ei])
+        sorted_data = data[data[:, 0].argsort(axis=0)]
+        h = sorted_data[:, 1].cumsum()
+        g = sorted_data[::-1, 1].cumsum()
+        t = g[-2::-1] - h[:-1]
+        ti = np.abs(t).argmax()
+        c = np.mean(sorted_data[ti:ti + 1, 0])
+        s = np.sign(t[ti])
         self.dimension = d
         self.threshold = c
         self.direction = s
 
 
 class BaggingModel(object):
-    def __init__(self, stumps=[]):
-        self.stumps = stumps
+    def __init__(self):
+        self.stumps = []
 
     def predict(self, x):
         y = 0
         for stump in self.stumps:
             y += stump.predict(x)
         return np.sign(y / len(self.stumps))
-
 
     def fit(self, x, y, nb_bagging, nb_resample, log_epoch=1000):
         self.stumps = []
@@ -180,5 +179,31 @@ class BaggingModel(object):
             stump = DecisionStump()
             stump.fit_random(xx, yy)
             self.stumps.append(stump)
+            if i % log_epoch == 0:
+                print 'i:{}'.format(i)
+
+
+
+class AdaBoost(object):
+    def __init__(self):
+        self.theta = np.array([])
+        self.stumps = []
+
+    def predict(self, x):
+        y = 0
+        n = len(self.theta)
+        for i in range(n):
+            y += self.theta[i] * self.stumps[i].predict(x)
+        return y
+
+    def fit(self, x, y, nb_weak_classifier, log_epoch=10):
+        n, m = x.shape
+        w = np.ones((n, 1), dtype=np.float32) / n
+
+        for i in range(nb_weak_classifier):
+            stump = DecisionStump()
+            stump.fit_random(x, y)
+            self.stumps.append(stump)
+            # TODO 更新
             if i % log_epoch == 0:
                 print 'i:{}'.format(i)
