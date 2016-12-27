@@ -280,3 +280,16 @@ class AdaBoost(object):
             # print 1 - epsilon, acc, acc >= 1-epsilon
             if acc >= 1 - epsilon:
                 break
+
+
+
+class LinearRegression(object):
+    def __init__(self):
+        pass
+
+    def predict(self, x):
+        pass
+
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, ):
+        pass
+
