@@ -16,3 +16,8 @@ import numpy as np
 
 def MSE(y_real, y_pred):
     return np.square(y_real - y_pred).mean()
+
+
+def ACC(y_real, y_pred):
+    return np.sum(y_real == y_pred) * 1.0 / y_real.shape[0]
+

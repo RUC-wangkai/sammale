@@ -2,7 +2,7 @@
 import numpy as np
 
 from .datasets import resample
-from .objectives import MSE
+from .objectives import MSE, ACC
 
 
 class LinearPrimaryFunctionModel(object):
@@ -147,19 +147,66 @@ class DecisionStump(object):
         return np.sign(self.direction * (x[:, self.dimension] - self.threshold)).reshape(x.shape[0], 1)
 
     def fit_random(self, x, y):
+        """x=nxm, y=nx1, 寻找0-1损失最小的决策数桩"""
         n, m = x.shape
         d = np.random.randint(0, m)
+        data = np.hstack((x[:, d].reshape(n, 1), y))
+        sorted_data = data[data[:, 0].argsort(axis=0)]
+
+        h = sorted_data[:, 1].cumsum()
+        g = sorted_data[::-1, 1].cumsum()
+        t = g[-2::-1] - h[:-1]
+        ti = np.abs(t).argmax()
+        c = np.mean(sorted_data[ti:ti + 2, 0])
+        s = np.sign(t[ti])
+        self.dimension = d
+        self.threshold = c
+        self.direction = s
+
+    def fit_random_weighted(self, x, y, w):
+        """x=nxm, y=nx1, w=nx1，"""
+        n, m = x.shape
+
+        d = np.random.randint(0, m)
+
+        y = y * w  # FIX 如果是y *= t会报错，因为y类型是int32，而w是float32
         data = np.hstack((x[:, d].reshape(n, 1), y))
         sorted_data = data[data[:, 0].argsort(axis=0)]
         h = sorted_data[:, 1].cumsum()
         g = sorted_data[::-1, 1].cumsum()
         t = g[-2::-1] - h[:-1]
         ti = np.abs(t).argmax()
-        c = np.mean(sorted_data[ti:ti + 1, 0])
+        c = np.mean(sorted_data[ti:ti + 2, 0])
         s = np.sign(t[ti])
         self.dimension = d
         self.threshold = c
         self.direction = s
+        weighted_zero_one_loss = 0.5 * (1 - s * t[ti])
+        return weighted_zero_one_loss
+
+    def fit_weighted(self, x, y, w):
+        """x=nxm, y=nx1, w=nx1，"""
+        n, m = x.shape
+
+        min_loss = 2
+        for d in range(m):
+            y = y * w  # FIXME 如果是y *= t会报错，因为y类型是int32，而w是float32
+            data = np.hstack((x[:, d].reshape(n, 1), y))
+            sorted_data = data[data[:, 0].argsort(axis=0)]
+            h = sorted_data[:, 1].cumsum()
+            g = sorted_data[::-1, 1].cumsum()
+            t = g[-2::-1] - h[:-1]
+            ti = np.abs(t).argmax()
+            c = np.mean(sorted_data[ti:ti + 2, 0])
+            s = np.sign(t[ti])
+            weighted_zero_one_loss = 0.5 * (1 - s * t[ti])
+            print 'd:{}, loss:{}, min_loss:{}'.format(d, weighted_zero_one_loss, min_loss)
+            if weighted_zero_one_loss < min_loss:
+                self.dimension = d
+                self.threshold = c
+                self.direction = s
+                min_loss = weighted_zero_one_loss
+        return min_loss
 
 
 class BaggingModel(object):
@@ -183,27 +230,53 @@ class BaggingModel(object):
                 print 'i:{}'.format(i)
 
 
-
 class AdaBoost(object):
     def __init__(self):
-        self.theta = np.array([])
+        self.thetas = []
         self.stumps = []
 
     def predict(self, x):
-        y = 0
-        n = len(self.theta)
+        y_pred = 0
+        n = len(self.thetas)
         for i in range(n):
-            y += self.theta[i] * self.stumps[i].predict(x)
-        return y
+            y_pred += self.thetas[i] * self.stumps[i].predict(x)
+        return np.sign(y_pred)
 
-    def fit(self, x, y, nb_weak_classifier, log_epoch=10):
+    def fit(self, x, y, nb_weak_classifier, epsilon=0, log_epoch=1, verbose=True):
         n, m = x.shape
-        w = np.ones((n, 1), dtype=np.float32) / n
+        w = np.ones((n, 1)) / n
 
         for i in range(nb_weak_classifier):
+            # Choose a best weak classifier
             stump = DecisionStump()
-            stump.fit_random(x, y)
+            err = stump.fit_random_weighted(x, y, w)
+            # print stump.dimension, stump.threshold, stump.direction
+
+            # calculate theta of this classifier
+            y_pred = stump.predict(x)
+            if np.isclose(err, 0):
+                theta = 1
+            else:
+                # print err
+                # print (1 - err) / err
+                theta = 0.5 * np.log((1 - err) / err)
+
             self.stumps.append(stump)
-            # TODO 更新
-            if i % log_epoch == 0:
-                print 'i:{}'.format(i)
+            self.thetas.append(theta)
+            # print 'theta:', theta
+
+            # update w
+            # factor = np.exp(- y_pred * y)
+            factor = np.exp(- theta * y_pred * y)
+            w *= factor
+            w /= w.sum()
+
+            y_pred = self.predict(x)
+            acc = ACC(y_pred, y)
+            if i % log_epoch == 0 and verbose:
+                print 'i:{:3}, acc:{:4.3}, dim:{:3}, dire:{:4}, thres:{:.4}'.format(i, acc, stump.dimension,
+                                                                                    stump.direction,
+                                                                                    stump.threshold)
+            # print 1 - epsilon, acc, acc >= 1-epsilon
+            if acc >= 1 - epsilon:
+                break

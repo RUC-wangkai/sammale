@@ -56,7 +56,7 @@ def make_simple_data0(nb=100):
     neg_x = np.random.randn(nb_neg, 2) * 0.2 - 0.8
     neg_y = -np.ones(nb_neg, dtype=np.float32)
 
-    return np.vstack((pos_x, neg_x)), np.hstack((pos_y, neg_y))
+    return np.vstack((pos_x, neg_x)), np.hstack((pos_y, neg_y)).reshape(nb, 1)
 
 
 def make_simple_data1(nb=100, dimension=2):
