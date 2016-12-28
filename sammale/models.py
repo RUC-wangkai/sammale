@@ -285,11 +285,41 @@ class AdaBoost(object):
 
 class LinearRegression(object):
     def __init__(self):
-        pass
+        self.w = None
 
     def predict(self, x):
-        pass
+        if self.w is None:
+            return 0
+        else:
+            prob = 1 / (1 + np.exp(- np.dot(x, self.w)))
+            # return prob
+            return 2 * prob - 1
+            # return np.sign(2 * prob - 1)
+            # return np.sign(np.dot(x, self.w))
 
-    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, ):
-        pass
+    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+        n, m = x.shape
+        self.w = np.random.randn(m, 1)
+        for epoch in range(nb_epochs):
+            for i in range(n):
+                t = np.exp(- y[i][0] * np.dot(x[i], self.w))[0]
+                d_w = t / (1 + t) * (- y[i][0] * x[i]).reshape(m, 1)
+                self.w -= lr * d_w + L2_lambda * self.w + L1_lambda * np.sign(self.w)
+            if epoch % log_epoch == 0 and verbose:
+                probs = self.predict(x)
+                y_pred = np.sign(probs)
+                print('epoch:{}, mse:{}, acc:{}'.format(epoch, MSE(y, probs), ACC(y, y_pred)))
 
+    def fit_SGD2(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+        n, m = x.shape
+        self.w = np.random.randn(m, 1)
+        for epoch in range(nb_epochs):
+            for i in range(n):
+                t = np.exp(np.dot(x[i], self.w))[0]
+                d_w = 0.5 * x[i] * ((t - 1) / (t + 1) - y[i][0])
+                d_w = d_w.reshape(m, 1)
+                self.w -= lr * d_w + L2_lambda * self.w + L1_lambda * np.sign(self.w)
+            if epoch % log_epoch == 0 and verbose:
+                probs = self.predict(x)
+                y_pred = np.sign(probs)
+                print('epoch:{}, mse:{}, acc:{}'.format(epoch, MSE(y, probs), ACC(y, y_pred)))
