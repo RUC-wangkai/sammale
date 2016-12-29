@@ -33,4 +33,4 @@ Sammale是一个简单的、容易上手的的Python机器学习库.
 
 - XGBoost: 待定。
 
-- GDBT: 待定。
+- GBDT: 待定。
