@@ -282,7 +282,6 @@ class AdaBoost(object):
                 break
 
 
-
 class LinearRegression(object):
     def __init__(self):
         self.w = None
@@ -291,13 +290,11 @@ class LinearRegression(object):
         if self.w is None:
             return 0
         else:
-            prob = 1 / (1 + np.exp(- np.dot(x, self.w)))
-            # return prob
-            return 2 * prob - 1
-            # return np.sign(2 * prob - 1)
-            # return np.sign(np.dot(x, self.w))
+            probs = 1 / (1 + np.exp(- np.dot(x, self.w)))
+            return 2 * probs - 1
 
-    def fit_SGD(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+    def fit_SGD1(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+        """y={-1, +1}"""
         n, m = x.shape
         self.w = np.random.randn(m, 1)
         for epoch in range(nb_epochs):
@@ -311,6 +308,7 @@ class LinearRegression(object):
                 print('epoch:{}, mse:{}, acc:{}'.format(epoch, MSE(y, probs), ACC(y, y_pred)))
 
     def fit_SGD2(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+        """y={-1, +1}"""
         n, m = x.shape
         self.w = np.random.randn(m, 1)
         for epoch in range(nb_epochs):
@@ -323,3 +321,19 @@ class LinearRegression(object):
                 probs = self.predict(x)
                 y_pred = np.sign(probs)
                 print('epoch:{}, mse:{}, acc:{}'.format(epoch, MSE(y, probs), ACC(y, y_pred)))
+
+    def fit_SGD3(self, x, y, lr=0.1, L1_lambda=0.0, L2_lambda=0.0, nb_epochs=100, log_epoch=1, verbose=True):
+        """y={0, +1}"""
+        n, m = x.shape
+        self.w = np.random.randn(m, 1)
+        for epoch in range(nb_epochs):
+            for i in range(n):
+                t = np.exp(np.dot(x[i], self.w))[0]
+                d_w = 1. / (1. + t) * x[i] * (t - y[i][0] - y[i][0] * t)
+                d_w = d_w.reshape(m, 1)
+                self.w -= lr * d_w + L2_lambda * self.w + L1_lambda * np.sign(self.w)
+            if epoch % log_epoch == 0 and verbose:
+                probs = self.predict(x)
+                y_pred = 0.5 * (1 + np.sign(2 * probs - 1))
+                print('epoch:{}, mse:{}, acc:{}'.format(epoch, MSE(y, probs), ACC(y, y_pred)))
+

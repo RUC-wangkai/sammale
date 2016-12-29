@@ -24,7 +24,7 @@ Sammale是一个简单的、容易上手的的Python机器学习库.
 - AdaBoost: Ensemble Learning方法之一，基于Boosting学习法。通过不断调整数据集权重，依次学习多个弱学习器的方法。
 
 
-- LinearRegression: 逻辑斯蒂回归。目前支持y={-1,+1}的二类分类问题。训练方法支持随机梯度下降法。
+- LinearRegression: 逻辑斯蒂回归。支持y={-1,+1}与y={0,+1}的二类分类问题。训练方法支持随机梯度下降法。
 支持L1正则化、L2正则化。
 
 - Softmax: 待定。
